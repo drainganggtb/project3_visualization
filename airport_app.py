@@ -9,9 +9,17 @@ import dash_table
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
+import config
+
+#import the data from postgres
+from sqlalchemy import create_engine
+import os
+engine = create_engine('postgresql://user:password@localhost:5432/Airport_DB')
+df_melt=pd.read_sql('passenger_data', engine)
+df_melt.rename(columns = {'type_of_traffic': 'type of traffic'}, inplace=True)
 
 ### import prepared data
-df_melt = pd.read_csv("df_melt.csv")
+#df_melt = pd.read_csv("df_melt.csv")
 
 # re-format date column to date format
 if 'date' in df_melt:
