@@ -9,9 +9,19 @@ import dash_table
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
-
+from DB.connect import connect
+from DB.postgresql import postgresql_to_dataframe
 ### import prepared data
-df_melt = pd.read_csv("df_melt.csv")
+#df_melt = pd.read_csv("df_melt.csv")
+
+# Connect to the database
+conn = connect()
+column_names = ["id", "airport", "type of traffic", "location","latitude","longitude",'date','passengers']
+# Execute the "SELECT *" query
+df_melt = postgresql_to_dataframe(conn, "select * from passenger_data", column_names)
+conn.close()
+print('connection closed')
+df_melt.head()
 
 # re-format date column to date format
 if 'date' in df_melt:
@@ -78,13 +88,13 @@ search_bar = dbc.Row(
 #--------------------------------------------------------------------------
 # Define navbar
 #--------------------------------------------------------------------------
-LOGO = ''
+LOGO = "download.jpeg"
 navbar = dbc.Navbar(
     [
         html.A(
             dbc.Row(
                 [
-                    dbc.Col(html.Img(src=LOGO,height='40px'),width='60px'),
+                    dbc.Col(html.Img(src=LOGO,height='40px',width='60px')),
                     dbc.Col(dbc.NavbarBrand('Norway Airport Passenger Traffic',className='ml-1')),
                 ],
                 align='center',
@@ -573,8 +583,8 @@ def update_figures(selected_traffic, selected_year, selected_month, selected_air
     else:
         bargap=0
 
-    mapbox_style = "mapbox://styles/lewiuberg/cki0nrkmf3x6w19qrwb8rmgm1"
-
+    #mapbox_style = "mapbox://styles/lewiuberg/cki0nrkmf3x6w19qrwb8rmgm1"
+    mapbox_style = "mapbox://styles/mapbox/streets-v11"
     current_df = df_melt.copy()
 
     current_df = current_df[current_df["type of traffic"] == selected_traffic]
@@ -584,6 +594,7 @@ def update_figures(selected_traffic, selected_year, selected_month, selected_air
     current_df = current_df[current_df['date'].dt.month.isin(selected_month)]
 
     current_df = current_df[current_df["airport"].isin(selected_airport)]
+    
     agg_current_df = current_df.groupby(
         ['airport'])['passengers'].agg('sum').to_frame().reset_index()
 
@@ -591,6 +602,7 @@ def update_figures(selected_traffic, selected_year, selected_month, selected_air
 
     maplat = current_df["latitude"].unique()
     maplon = current_df["longitude"].unique()
+
     current_df_map = current_df.groupby(["airport"]).sum().copy().reset_index()
     current_df_map["latitude"] = maplat
     current_df_map["longitude"] = maplon
@@ -601,17 +613,21 @@ def update_figures(selected_traffic, selected_year, selected_month, selected_air
                      orientation="h",
                      log_x=scale,
                      # hover_name="airport",
-                     # color="airport",
-                     # color_continuous_scale=["blue"],
-                     # color_discrete_map=["blue"],
-                     color_discrete_sequence=[color_2],
+                     color="passengers",
+                     #color_continuous_scale=["blue"],
+                     #color_discrete_map=["blue"],
+                     #color_discrete_sequence=[color_1],
+    
                      )
     fig_bar.update_traces(
         hovertemplate='Passengers: %{x:n}')
+
     fig_bar.update_traces(hovertemplate=None,
                           selector={"name": "airport"})
+
     fig_bar.update_traces(texttemplate='%{x:.2s}',
                           textposition='outside')
+
     fig_bar.update_layout(hovermode="y",
                           paper_bgcolor='rgba(0,0,0,0)',
                           plot_bgcolor='rgba(0,0,0,0)',
@@ -621,6 +637,7 @@ def update_figures(selected_traffic, selected_year, selected_month, selected_air
                           modebar={'bgcolor': 'rgba(255,255,255,0.0)'},
                           xaxis_title="Amount of Passengers",
                           yaxis_title="Airports",)
+
     fig_bar.update_xaxes(showgrid=False)
     fig_bar.update_yaxes(showgrid=False)
 
@@ -630,18 +647,19 @@ def update_figures(selected_traffic, selected_year, selected_month, selected_air
                                     lat="latitude",
                                     lon="longitude",
                                     size="passengers",
-                                    opacity=.8,
-                                    size_max=35,
+                                    opacity=.9,
+                                    size_max=60,
                                     color="passengers",
                                     text="airport",
                                     hover_name="airport",
-                                    color_continuous_scale=[color_1, color_2, color_3],
+                                    #color_continuous_scale=['red','blue','green'],
                                     zoom=3.9,
                                     center={"lat": 65, "lon": 17},
                                     )
 
     fig_map.update_traces(
         hovertemplate='<b>%{text}</b><br><br>Passengers: %{marker.size:n} <br>Lat: %{lat:,.2f} <br>Lon: %{lon:,.2f}')
+
     fig_map.update_traces(hovertemplate=None, selector={"name": "airport"})
 
     fig_map.update_layout(mapbox_style=mapbox_style,
