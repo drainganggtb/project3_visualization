@@ -21,7 +21,7 @@ column_names = ["id", "airport", "type of traffic", "location","latitude","longi
 df_melt = postgresql_to_dataframe(conn, "select * from passenger_data", column_names)
 conn.close()
 print('connection closed')
-df_melt.head()
+#df_melt.head()
 
 # re-format date column to date format
 if 'date' in df_melt:
@@ -88,13 +88,13 @@ search_bar = dbc.Row(
 #--------------------------------------------------------------------------
 # Define navbar
 #--------------------------------------------------------------------------
-LOGO = "download.jpeg"
+LOGO =""
 navbar = dbc.Navbar(
     [
         html.A(
             dbc.Row(
                 [
-                    dbc.Col(html.Img(src=LOGO,height='40px',width='60px')),
+                    dbc.Col(html.Img(src=LOGO,height='40px'),width='60px'),
                     dbc.Col(dbc.NavbarBrand('Norway Airport Passenger Traffic',className='ml-1')),
                 ],
                 align='center',
@@ -583,8 +583,10 @@ def update_figures(selected_traffic, selected_year, selected_month, selected_air
     else:
         bargap=0
 
+
     #mapbox_style = "mapbox://styles/lewiuberg/cki0nrkmf3x6w19qrwb8rmgm1"
     mapbox_style = "mapbox://styles/mapbox/streets-v11"
+    #mapbox_style = mapbox
     current_df = df_melt.copy()
 
     current_df = current_df[current_df["type of traffic"] == selected_traffic]
@@ -741,13 +743,6 @@ def update_figure(selected_traffic, selected_airport, selected_scale):
     fig_line.update_yaxes(showgrid=False)
 
     return fig_line
-
-
-
-
-
-
-
 
 app.run_server(debug=True)
 #if __name__ == '__main__':
